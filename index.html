@@ -226,8 +226,6 @@ function makeCrib(c) {
     box(0.06, 0.6, 0.06, WOOD_D, x, 0.78, d / 2 - 0.07, g);
   }
   for (let i = 1; i < 4; i++) for (const sx of [-1, 1]) box(0.06, 0.75, 0.06, WOOD_D, sx * (w / 2 - 0.07), 0.85, -d / 2 + i * d / 4, g);
-  const tag = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.46), new THREE.MeshBasicMaterial({ map: labelTex(c.name, '#ff4f79', 128, 34, 23) }));
-  tag.rotation.x = -1.05; tag.position.set(0, 0.2, d / 2 + 0.3); g.add(tag);
   // sombra
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.5, d + 0.5), new THREE.MeshBasicMaterial({ color: 0x2b2147, transparent: true, opacity: 0.2, depthWrite: false }));
   sh.rotation.x = -Math.PI / 2; sh.position.set(0.12, 0.02, 0.12); g.add(sh);
@@ -251,7 +249,7 @@ function makeCrib(c) {
   const frill = new THREE.Mesh(new THREE.TorusGeometry(R * 1.0, 0.09, 5, 12), mat(0xffffff)); frill.position.z = -0.03; head.add(frill);
   head.scale.set(0.84, 1.1, 0.86);
   c.tears = [-1, 1].map(s => { const t = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), mat(0x4ab8ff)); b.add(t); t.userData.s = s; return t; });
-  b.scale.setScalar(1.18); c.babyG = b; c.head = head;
+  b.scale.setScalar(1.5); c.babyG = b; c.head = head;
   return g;
 }
 
@@ -321,7 +319,7 @@ function layout() {
 
   let fit;
   if (portrait) {
-    const sx = [-3.45, -1.15, 1.15, 3.45], cx = [-1.3, 3.0], cz = [-7.4, -3.2, 1.0, 5.2];
+    const sx = [-3.45, -1.15, 1.15, 3.45], cx = [-2.65, 2.65], cz = [-7.4, -3.2, 1.0, 5.2];
     stations.forEach((s, i) => { s.x = sx[i]; s.z = 8.8; s.ax = s.x; s.az = 7.45; s.g.scale.setScalar(1); });
     cribs.forEach((c, i) => { c.x = cx[i % 2]; c.z = cz[Math.floor(i / 2)]; });
     bounds = { x0: -4.3, x1: 4.3, z0: -8.5, z1: 7.45 };
@@ -334,7 +332,8 @@ function layout() {
     fit = { x: 8.5, z0: -5.4, z1: 5.5, pitch: 0.9, wallZ: -5.6, fx: 9.2 };
   }
   for (const s of stations) s.g.position.set(s.x, 0, s.z);
-  for (const c of cribs) { c.ax = c.x - 1.5; c.az = c.z + 0.3; c.g.position.set(c.x, 0, c.z); c.head.rotation.x = portrait ? -0.62 : -0.5; }
+  // en vertical: cunas simétricas y más grandes, se atienden desde el pasillo central
+  for (const c of cribs) { c.ax = portrait ? c.x - Math.sign(c.x) * 1.75 : c.x - 1.5; c.az = c.z + 0.3; c.g.position.set(c.x, 0, c.z); c.g.scale.setScalar(portrait ? 1.25 : 1); c.head.rotation.x = portrait ? -0.62 : -0.5; }
 
   // habitación
   if (room) scene.remove(room);
@@ -583,7 +582,7 @@ function sync(dt) {
       });
     }
     if (crying) {
-      const [sx, sy] = toScreen(c.x + 0.85, 2.95, c.z), nd = NEEDS[c.need];
+      const k = portrait ? 1.25 : 1, [sx, sy] = toScreen(c.x + 0.95 * k, 3.25 * k, c.z), nd = NEEDS[c.need];
       const st = c.bub.style; st.display = 'flex'; st.left = sx + 'px'; st.top = (sy + Math.sin(c.ph * 5) * 3) + 'px';
       st.background = 'radial-gradient(circle, #fff 56%, transparent 58%), conic-gradient(' + (urgent ? '#ff3b3b' : nd.color) + ' ' + (f * 360) + 'deg, #e9e4f5 0)';
       st.transform = 'scale(' + (bs / 54) + ')';
